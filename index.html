@@ -767,7 +767,7 @@ body.dan-privacy-on [data-dan-private="1"]{filter:blur(7px)!important;user-selec
 body.dan-privacy-on #danRecentTools{filter:blur(7px)!important;user-select:none!important}
 </style>
 
-<meta name="dan-site-version" content="213">
+<meta name="dan-site-version" content="214">
 
 
 <style id="dan-v212-final-ui">
@@ -842,6 +842,13 @@ body.dan-category-only .dan-v203-selected{
  opacity:1!important;
 }
 body.dan-category-only .dan-v203-selected[hidden]{display:block!important}
+</style>
+
+<style id="dan-v214-category-toggle-fix">
+/* Category menu: closed by default; tap button to open/close. */
+.dan-v198-toggle{position:fixed!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important}
+.dan-v198-cat-panel{display:none!important}
+#danV198CatToggle:checked ~ .dan-v198-cat-panel{display:block!important}
 </style>
 
 </head><body>
@@ -3070,7 +3077,12 @@ function showCategory(id){
 }
 document.addEventListener("click",function(e){
  var a=e.target.closest&&e.target.closest(".dan-v198-cat-list a[href^='#']");
- if(a){var id=a.getAttribute("href").slice(1);if($(id)){e.preventDefault();showCategory(id)}}
+ if(a){var id=a.getAttribute("href").slice(1);if($(id)){e.preventDefault();showCategory(id);return}}
+ var cb=$("danV198CatToggle");
+ if(cb&&cb.checked&&!e.target.closest(".dan-v198-cat-panel")&&!e.target.closest(".dan-v198-cat-button"))cb.checked=false;
+});
+document.addEventListener("keydown",function(e){
+ if(e.key==="Escape"){var cb=$("danV198CatToggle");if(cb)cb.checked=false}
 });
 var all=$("danV203ShowAll");if(all)all.addEventListener("click",showAll);
 
