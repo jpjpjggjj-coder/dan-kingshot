@@ -767,7 +767,7 @@ body.dan-privacy-on [data-dan-private="1"]{filter:blur(7px)!important;user-selec
 body.dan-privacy-on #danRecentTools{filter:blur(7px)!important;user-select:none!important}
 </style>
 
-<meta name="dan-site-version" content="214">
+<meta name="dan-site-version" content="215">
 
 
 <style id="dan-v212-final-ui">
@@ -844,13 +844,16 @@ body.dan-category-only .dan-v203-selected{
 body.dan-category-only .dan-v203-selected[hidden]{display:block!important}
 </style>
 
-<style id="dan-v214-category-toggle-fix">
-/* Category menu: closed by default; tap button to open/close. */
+
+<style id="dan-v215-stability-fix">
+/* Stable mobile category drawer */
 .dan-v198-toggle{position:fixed!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important}
 .dan-v198-cat-panel{display:none!important}
-#danV198CatToggle:checked ~ .dan-v198-cat-panel{display:block!important}
+#danV198CatToggle:checked + .dan-v198-cat-button + .dan-v198-cat-panel{display:block!important}
+.dan-v198-cat-button{cursor:pointer!important;user-select:none!important;-webkit-user-select:none!important}
+body.dan-category-only .dan-v203-selected{display:block!important;visibility:visible!important;opacity:1!important}
+@media(max-width:390px){.dan-v198-cat-panel{max-height:70vh!important}}
 </style>
-
 </head><body>
 <button type="button" id="danV203ShowAll">🏠 全体表示</button>
 
@@ -3077,14 +3080,17 @@ function showCategory(id){
 }
 document.addEventListener("click",function(e){
  var a=e.target.closest&&e.target.closest(".dan-v198-cat-list a[href^='#']");
- if(a){var id=a.getAttribute("href").slice(1);if($(id)){e.preventDefault();showCategory(id);return}}
- var cb=$("danV198CatToggle");
- if(cb&&cb.checked&&!e.target.closest(".dan-v198-cat-panel")&&!e.target.closest(".dan-v198-cat-button"))cb.checked=false;
+ if(a){var id=a.getAttribute("href").slice(1);if($(id)){e.preventDefault();showCategory(id)}}
 });
-document.addEventListener("keydown",function(e){
- if(e.key==="Escape"){var cb=$("danV198CatToggle");if(cb)cb.checked=false}
+var all=$("danV203ShowAll");if(all)all.addEventListener("click",function(){showAll();var cb=$("danV198CatToggle");if(cb)cb.checked=false});
+/* Close the category drawer after selection or an outside tap. */
+document.addEventListener("click",function(e){
+ var cb=$("danV198CatToggle"),panel=document.querySelector(".dan-v198-cat-panel"),btn=document.querySelector(".dan-v198-cat-button");
+ if(!cb||!cb.checked)return;
+ if(panel&&panel.contains(e.target))return;
+ if(btn&&(e.target===btn||btn.contains(e.target)))return;
+ cb.checked=false;
 });
-var all=$("danV203ShowAll");if(all)all.addEventListener("click",showAll);
 
 /* Manual data update only. No load/pageshow/visibility timers. */
 function setStatus(t){var x=$("danLiveUpdateStatus");if(x)x.textContent=t}
@@ -3123,7 +3129,52 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 
 window.DANCategoryOnly={show:showCategory,clear:showAll};
 window.DANLiveUpdate={check:manualUpdate,apply:apply};
-window.DANFinal={protect:protect,version:212};
+window.DANFinal={protect:protect,version:215};
+})();
+</script>
+
+
+<!-- v216: AIチャット安定化 -->
+<style id="dan-v216-ai-stable-css">
+#danAiFloatBtn{display:flex!important;position:fixed!important;right:14px!important;bottom:86px!important;z-index:2147483647!important;width:auto!important;min-width:58px!important;height:52px!important;padding:0 13px!important;border:2px solid rgba(255,255,255,.9)!important;border-radius:26px!important;background:#1769d2!important;color:#fff!important;font-size:15px!important;font-weight:900!important;align-items:center!important;justify-content:center!important;box-shadow:0 5px 18px rgba(0,0,0,.32)!important}
+#danAiToggle{display:none!important}
+html.dan-ai-launcher-hidden #chatbase-bubble-button{opacity:1!important;pointer-events:auto!important;transform:scale(.72)!important}
+@media(max-width:600px){#danAiFloatBtn{right:12px!important;bottom:82px!important;height:50px!important}}
+</style>
+<button type="button" id="danAiFloatBtn" aria-label="チャッピーを開く">🤖 チャッピー</button>
+<script id="dan-v216-ai-stable-js">
+(function(){
+ 'use strict';
+ var AGENT='T4VFq8D1liE8LFa_MFtfT';
+ function ensureChatbase(){
+   if(!window.chatbase){
+     var fn=function(){fn.q=fn.q||[];fn.q.push(arguments)};fn.q=[];window.chatbase=fn;
+   }
+   if(!document.getElementById(AGENT)){
+     var sc=document.createElement('script');sc.src='https://www.chatbase.co/embed.min.js';sc.id=AGENT;sc.setAttribute('domain','www.chatbase.co');sc.async=true;document.body.appendChild(sc);
+   }
+ }
+ function openChat(){
+   ensureChatbase();
+   try{window.chatbase('open')}catch(e){}
+   var tries=0,t=setInterval(function(){
+     tries++;
+     var bubble=document.getElementById('chatbase-bubble-button');
+     var win=document.getElementById('chatbase-bubble-window');
+     if(win){
+       try{window.chatbase('open')}catch(e){}
+       if(bubble && (!win.getBoundingClientRect || win.getBoundingClientRect().height<60)) bubble.click();
+     } else if(bubble){ bubble.click(); }
+     if((win&&win.getBoundingClientRect&&win.getBoundingClientRect().height>60)||tries>=12)clearInterval(t);
+   },250);
+ }
+ function init(){
+   try{localStorage.removeItem('danAiLauncherHidden')}catch(e){}
+   document.documentElement.classList.remove('dan-ai-launcher-hidden');
+   ensureChatbase();
+   var b=document.getElementById('danAiFloatBtn');if(b)b.addEventListener('click',openChat);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
 
